@@ -7,7 +7,7 @@ fi
 
 DELTICKS="$($TICKTACK list | jq -r '. | keys | .[]')"
 
-TICKS="$(curl "$WPAPI/wp/v2/live?filter%5Btaxonomy%5D=tickevents&filter%5Bterm%5D=test" | jq '.[].id')"
+TICKS="$(curl "$WPAPI/wp/v2/live?filter%5Btaxonomy%5D=tickevents&filter%5Bterm%5D=$EVENTSLUG" | jq '.[].id')"
 for ID in $TICKS; do
   TICKDATA="$(curl $WPAPI/wp/v2/live/$ID)"
 
