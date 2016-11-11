@@ -16,15 +16,38 @@ for ID in $TICKS; do
 
   TICKCONTENT="$(echo "$TICKDATA" | jq -r .content.rendered)"
   FEATUREDMEDIA="$(echo "$TICKDATA" | jq -r '._links["wp:featuredmedia"][0].href')"
+  MEDIAURL="null"
   if [ "$FEATUREDMEDIA" != "null" ]; then
     MEDIADATA="$(curl $FEATUREDMEDIA)"
-    MEDIAURL="$(echo "$MEDIADATA" | jq -r .source_url)"
+
+    MEDIAURL="$(echo "$MEDIADATA" | jq -r '.media_details.sizes["ticker-sized"].source_url')"
+    if [ "$MEDIAURL" = "null" ]; then
+      MEDIAURL="$(echo "$MEDIADATA" | jq -r '.media_details.sizes["large"].source_url')"
+    fi
+    if [ "$MEDIAURL" = "null" ]; then
+      MEDIAURL="$(echo "$MEDIADATA" | jq -r '.media_details.sizes["medium-large"].source_url')"
+    fi
+    if [ "$MEDIAURL" = "null" ]; then
+      MEDIAURL="$(echo "$MEDIADATA" | jq -r '.media_details.sizes["post-thumbnail"].source_url')"
+    fi
+    if [ "$MEDIAURL" = "null" ]; then
+      MEDIAURL="$(echo "$MEDIADATA" | jq -r '.media_details.sizes["thumbnail"].source_url')"
+    fi
+  fi
+
+  MEDIAPARAM=""
+  if [ "$MEDIAURL" != "null" ]; then
     MEDIAFILE="$(tempfile)"
     curl "$MEDIAURL" >$MEDIAFILE
-    echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH --media $MEDIAFILE $ID
-    rm $MEDIAFILE
-  else
-    echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH $ID
+    if [ "$(identify $MEDIAFILE | awk '{ print $2 }')" = "JPEG" ]; then
+      MEDIAPARAM="--media $MEDIAFILE"
+    fi
+  fi
+
+  echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH $MEDIAPARAM $ID
+
+  if [ "$MEDIAFILE" != "" ]; then
+    rm "$MEDIAFILE"
   fi
 
   DELTICKS="$(echo "$DELTICKS" | grep -v $ID)"

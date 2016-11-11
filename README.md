@@ -18,4 +18,5 @@ This script will sync ticktack to whatever WordPress gives.
 * ticktack
 * curl
 * jq
+* imagemagick
 
