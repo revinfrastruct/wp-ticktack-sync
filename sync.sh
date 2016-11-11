@@ -15,7 +15,17 @@ for ID in $TICKS; do
   TICKEPOCH="$(date -d "$TICKDATE" +'%s')"
 
   TICKCONTENT="$(echo "$TICKDATA" | jq -r .content.rendered)"
-  echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH $ID
+  FEATUREDMEDIA="$(echo "$TICKDATA" | jq -r '._links["wp:featuredmedia"][0].href')"
+  if [ "$FEATUREDMEDIA" != "null" ]; then
+    MEDIADATA="$(curl $FEATUREDMEDIA)"
+    MEDIAURL="$(echo "$MEDIADATA" | jq -r .source_url)"
+    MEDIAFILE="$(tempfile)"
+    curl "$MEDIAURL" >$MEDIAFILE
+    echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH --media $MEDIAFILE $ID
+    rm $MEDIAFILE
+  else
+    echo "$TICKCONTENT" | $TICKTACK set --time $TICKEPOCH $ID
+  fi
 
   DELTICKS="$(echo "$DELTICKS" | grep -v $ID)"
 done
