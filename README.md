@@ -19,4 +19,5 @@ This script will sync ticktack to whatever WordPress gives.
 * curl
 * jq
 * imagemagick
+* exiftool (apt-get install libimage-exiftool-perl)
 
